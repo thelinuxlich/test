@@ -200,15 +200,22 @@ export const findStudentToUpdate = async (payload: StudentPayload) => {
 
 export const deleteStudent = async (id: number) => {
   const db = getDatabase();
-  return Number((await db.transaction().execute(async trx => {
+
+  const result = await db.transaction().execute(async (trx) => {
+    // First delete user_profiles (due to foreign key constraint)
     await trx
-    .deleteFrom("userProfiles")
-    .where("userId", "=", id)
-    .execute();
-    return await db
-    .deleteFrom("users")
-    .where("id", "=", id)
-    .executeTakeFirst();
-  })).numDeletedRows)
+      .deleteFrom("userProfiles")
+      .where("userId", "=", id)
+      .execute();
+
+    // Then delete the user
+    return await trx
+      .deleteFrom("users")
+      .where("id", "=", id)
+      .executeTakeFirst();
+  });
+
+  const numDeleted = (result as any)?.numDeletedRows;
+  return numDeleted ? Number(numDeleted) : 0;
 };
 

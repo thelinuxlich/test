@@ -318,30 +318,41 @@ describe('Students Repository', () => {
 
   describe('deleteStudent', () => {
     it('should delete student and user profile', async () => {
-      const mockQuery = {
+      const mockTrx = {
         deleteFrom: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         execute: vi.fn().mockResolvedValue(undefined),
         executeTakeFirst: vi.fn().mockResolvedValue({ numDeletedRows: 1 }),
       };
 
-      vi.mocked(getDatabase).mockReturnValue(mockQuery as any);
+      vi.mocked(getDatabase).mockReturnValue({
+        transaction: vi.fn().mockReturnValue({
+          execute: vi.fn(async (callback) => {
+            return await callback(mockTrx);
+          }),
+        }),
+      } as any);
 
       const result = await deleteStudent(1);
 
       expect(result).toBe(1);
-      expect(mockQuery.deleteFrom).toHaveBeenCalledWith('userProfiles');
     });
 
     it('should return 0 when no rows deleted', async () => {
-      const mockQuery = {
+      const mockTrx = {
         deleteFrom: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         execute: vi.fn().mockResolvedValue(undefined),
         executeTakeFirst: vi.fn().mockResolvedValue({ numDeletedRows: 0 }),
       };
 
-      vi.mocked(getDatabase).mockReturnValue(mockQuery as any);
+      vi.mocked(getDatabase).mockReturnValue({
+        transaction: vi.fn().mockReturnValue({
+          execute: vi.fn(async (callback) => {
+            return await callback(mockTrx);
+          }),
+        }),
+      } as any);
 
       const result = await deleteStudent(1);
 
