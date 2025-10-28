@@ -16,6 +16,12 @@
     "test:all": "npm run test:run && npm run test:integration",
     "db:generate": "kysely-codegen --out-file src/types/database.ts",
     "db:generate:watch": "kysely-codegen --out-file src/types/database.ts --watch",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:down:volumes": "docker compose down -v",
+    "docker:logs": "docker compose logs -f",
+    "docker:ps": "docker compose ps",
+    "docker:restart": "docker compose restart",
     "clean": "rm -rf dist",
     "clean:js": "find src -name '*.js' -type f ! -path '*/node_modules/*' -delete",
     "clean:all": "npm run clean && npm run clean:js"
