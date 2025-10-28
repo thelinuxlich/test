@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: school_mgmt_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: school_mgmt
+    ports:
+      - "5432:5432"
+    volumes:
+      # Mount the SQL files for initialization
+      - ./seed_db/tables.sql:/docker-entrypoint-initdb.d/01-tables.sql
+      - ./seed_db/seed-db.sql:/docker-entrypoint-initdb.d/02-seed-db.sql
+      # Persist data between container restarts
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - school_mgmt_network
+
+volumes:
+  postgres_data:
+
+networks:
+  school_mgmt_network:
+    driver: bridge
+
