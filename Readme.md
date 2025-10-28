@@ -17,19 +17,48 @@ skill-test/
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- PostgreSQL (v12 or higher)
+- Docker & Docker Compose (recommended) OR PostgreSQL (v12 or higher)
 - npm or yarn
 
-### 1. Backend Setup
+### Option 1: Quick Start with Docker Compose (Recommended)
+
+This is the easiest way to get started. Docker Compose will automatically set up the database with schema and seed data.
+
 ```bash
+# 1. Start the database (from project root)
+docker-compose up -d
+
+# 2. Wait for database to be ready (check with: docker-compose ps)
+
+# 3. Backend Setup
 cd backend
 npm install
-cp .env.example .env  # Configure your environment variables
+cp .env.example .env  # Default values work with Docker
 npm start
+
+# 4. Frontend Setup (in a new terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-### 2. Frontend Setup
+### Option 2: Manual Setup with PostgreSQL
+
+If you prefer to use PostgreSQL directly:
+
 ```bash
+# 1. Create and initialize database
+createdb school_mgmt
+psql -d school_mgmt -f seed_db/tables.sql
+psql -d school_mgmt -f seed_db/seed-db.sql
+
+# 2. Backend Setup
+cd backend
+npm install
+cp .env.example .env
+npm start
+
+# 3. Frontend Setup (in a new terminal)
 cd frontend
 npm install
 npm run dev
@@ -38,19 +67,9 @@ npm run dev
 ### 3. Access the Application
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:5007
-- **Demo Credentials**: 
+- **Demo Credentials**:
   - Email: `admin@school-admin.com`
   - Password: `3OU4zn3q6Zh9`
-
-### ** Database Setup **
-```bash
-# Create PostgreSQL database
-createdb school_mgmt
-
-# Run database migrations
-psql -d school_mgmt -f seed_db/tables.sql
-psql -d school_mgmt -f seed_db/seed-db.sql
-```
 
 ## 🎯 Skill Test Problems
 

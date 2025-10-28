@@ -15,12 +15,34 @@ This directory contains the database schema and seed data for the Student Manage
 
 ## 🚀 Quick Setup
 
-### Prerequisites
-- PostgreSQL installed and running
-- Database user with CREATE privileges
-- psql command-line tool
+### Option 1: Using Docker Compose (Recommended)
 
-### Database Setup
+The easiest way to set up the database with automatic schema and seed data loading:
+
+```bash
+# From the project root directory
+docker-compose up -d
+
+# Verify the database is ready
+docker-compose ps
+
+# Check logs
+docker-compose logs postgres
+
+# Verify data was loaded
+docker exec school_mgmt_db psql -U postgres -d school_mgmt -c "SELECT COUNT(*) FROM users;"
+```
+
+The database will automatically:
+- Create the `school_mgmt` database
+- Load the schema from `tables.sql`
+- Load the seed data from `seed-db.sql`
+- Persist data in a Docker volume
+
+### Option 2: Manual PostgreSQL Setup
+
+If you prefer to use PostgreSQL directly without Docker:
+
 ```bash
 # Create database
 createdb school_mgmt
@@ -35,7 +57,7 @@ psql -d school_mgmt -f seed-db.sql
 psql -d school_mgmt -c "SELECT COUNT(*) FROM users;"
 ```
 
-### Alternative Setup (with custom database name)
+### Option 3: Custom Database Name (Manual Setup)
 ```bash
 # Create custom database
 createdb my_school_db
@@ -271,7 +293,45 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Docker Compose Issues
+
+#### Database container won't start
+```bash
+# Check logs
+docker-compose logs postgres
+
+# Verify port 5432 is not in use
+lsof -i :5432
+
+# Remove and restart
+docker-compose down -v
+docker-compose up -d
+```
+
+#### Database not initialized with seed data
+```bash
+# Check if files are mounted correctly
+docker-compose exec postgres ls -la /docker-entrypoint-initdb.d/
+
+# Manually run the SQL files
+docker-compose exec postgres psql -U postgres -d school_mgmt -f /docker-entrypoint-initdb.d/01-tables.sql
+docker-compose exec postgres psql -U postgres -d school_mgmt -f /docker-entrypoint-initdb.d/02-seed-db.sql
+```
+
+#### Connection refused from backend
+```bash
+# Ensure database is healthy
+docker-compose ps
+
+# Check if backend can reach database
+docker-compose exec postgres pg_isready -U postgres
+
+# Verify DATABASE_URL in backend .env
+# Should be: postgresql://postgres:postgres@postgres:5432/school_mgmt
+# (Note: use 'postgres' as hostname when connecting from Docker network)
+```
+
+### Manual PostgreSQL Issues
 
 #### Connection Issues
 ```bash

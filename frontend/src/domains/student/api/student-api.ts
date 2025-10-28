@@ -30,7 +30,7 @@ export const studentApi = api.injectEndpoints({
     reviewStudentStatus: builder.mutation<{ message: string }, ReviewStudentStatusRequest>({
       query: ({ id, status }) => ({
         url: `/students/${id}/status`,
-        method: 'POST',
+        method: 'PATCH',
         body: { status }
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: Tag.STUDENTS, id }]

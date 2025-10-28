@@ -1,15 +1,67 @@
 # Backend - Student Management System API
 
-A robust Node.js REST API built with Express.js and PostgreSQL for managing school operations with comprehensive authentication, authorization, and CRUD operations.
+A robust Node.js REST API built with **TypeScript**, Express.js, and PostgreSQL for managing school operations with comprehensive authentication, authorization, and CRUD operations.
+
+## 🎯 Technology Stack
+
+- **Language**: TypeScript (strict mode)
+- **Runtime**: Node.js with tsx for development
+- **Framework**: Express.js
+- **Database**: PostgreSQL with Kysely (type-safe query builder)
+- **Authentication**: JWT with Argon2 password hashing
+- **Validation**: Zod schemas
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- PostgreSQL (v12 or higher)
+- Node.js (v18 or higher)
+- Docker & Docker Compose (for database setup) OR PostgreSQL (v12 or higher)
 - npm or yarn
 
-### Installation & Setup
+### Installation & Setup (Recommended - Using Docker Compose)
+
+#### Step 1: Start the Database
+```bash
+# From the project root directory
+docker-compose up -d
+
+# Verify the database is ready
+docker-compose ps
+```
+
+The database will automatically initialize with the schema and seed data. Wait for the healthcheck to pass (should take ~10-15 seconds).
+
+#### Step 2: Install Backend Dependencies
+```bash
+cd backend
+npm install
+```
+
+#### Step 3: Configure Environment Variables
+```bash
+cp .env.example .env
+# Edit .env with your configuration (default values should work with Docker)
+```
+
+#### Step 4: Generate Database Types (TypeScript)
+```bash
+npm run db:generate
+```
+
+#### Step 5: Start the Server
+```bash
+# Development (with hot-reload)
+npm run dev
+
+# Or production build
+npm run build
+npm start
+```
+
+### Alternative Setup (Manual PostgreSQL)
+
+If you prefer to use PostgreSQL directly without Docker:
+
 ```bash
 # Install dependencies
 npm install
@@ -18,7 +70,7 @@ npm install
 cp .env.example .env
 # Edit .env with your configuration
 
-# Set up database
+# Set up database (requires PostgreSQL to be running)
 createdb school_mgmt
 psql -d school_mgmt -f ../seed_db/tables.sql
 psql -d school_mgmt -f ../seed_db/seed-db.sql
@@ -47,6 +99,33 @@ UI_URL=http://localhost:5173
 API_URL=http://localhost:5007
 COOKIE_DOMAIN=localhost
 RESEND_API_KEY=your_resend_api_key
+```
+
+### Docker Compose Commands
+
+If using Docker Compose for the database:
+
+```bash
+# Start the database container
+docker-compose up -d
+
+# View logs
+docker-compose logs -f postgres
+
+# Stop the database
+docker-compose stop
+
+# Stop and remove containers
+docker-compose down
+
+# Remove containers and volumes (WARNING: deletes database data)
+docker-compose down -v
+
+# Restart the database
+docker-compose restart
+
+# Check container status
+docker-compose ps
 ```
 
 ## 🛠️ Technology Stack
@@ -493,6 +572,173 @@ CMD ["npm", "start"]
 | `npm test` | Run test suite |
 | `npm run lint` | Run ESLint |
 | `npm run format` | Format code with Prettier |
+| `npm run db:generate` | Generate Kysely schema types from PostgreSQL database |
+| `npm run db:generate:watch` | Watch mode for Kysely schema generation (auto-regenerate on schema changes) |
+
+## 🗄️ Database with Kysely
+
+This project uses **Kysely** for type-safe database queries with automatic schema generation.
+
+### What is Kysely?
+
+Kysely is a type-safe SQL query builder for TypeScript/JavaScript that provides:
+- **Type Safety**: Full TypeScript support with auto-generated types from your database schema
+- **Query Builder**: Fluent API for building SQL queries
+- **No Runtime Overhead**: Compiles to standard SQL
+- **Database Agnostic**: Works with PostgreSQL, MySQL, SQLite, and more
+
+### Generating Database Types
+
+The database schema types are auto-generated from your PostgreSQL database using `kysely-codegen`.
+
+#### First Time Setup
+
+```bash
+# 1. Ensure PostgreSQL database is running
+docker-compose up -d
+
+# 2. Generate the schema types
+npm run db:generate
+
+# This creates src/types/database.ts with all table types
+```
+
+#### Regenerating After Schema Changes
+
+Whenever you modify the database schema (add/remove tables or columns):
+
+```bash
+# One-time generation
+npm run db:generate
+
+# Or use watch mode for continuous updates
+npm run db:generate:watch
+```
+
+### Using Kysely in Your Code
+
+#### Basic Example
+
+```javascript
+const { getDatabase } = require('../db');
+
+// Get the database instance
+const db = getDatabase();
+
+// SELECT query
+const users = await db
+  .selectFrom('users')
+  .selectAll()
+  .where('role_id', '=', 1)
+  .execute();
+
+// INSERT query
+const newUser = await db
+  .insertInto('users')
+  .values({
+    name: 'John Doe',
+    email: 'john@example.com',
+    roleId: 2,
+  })
+  .returningAll()
+  .executeTakeFirstOrThrow();
+
+// UPDATE query
+const updated = await db
+  .updateTable('users')
+  .set({ name: 'Jane Doe' })
+  .where('id', '=', 1)
+  .returningAll()
+  .executeTakeFirst();
+
+// DELETE query
+await db
+  .deleteFrom('users')
+  .where('id', '=', 1)
+  .execute();
+```
+
+#### Using Query Utilities
+
+For simpler operations, use the provided query utilities:
+
+```javascript
+const { selectAll, selectOne, insert, update, deleteRows } = require('../db');
+
+// Select all users
+const users = await selectAll('users');
+
+// Select one user by ID
+const user = await selectOne('users', { id: 1 });
+
+// Insert a new user
+const newUser = await insert('users', {
+  name: 'John Doe',
+  email: 'john@example.com',
+  roleId: 2,
+});
+
+// Update a user
+const updated = await update('users', { id: 1 }, { name: 'Jane Doe' });
+
+// Delete a user
+const deletedCount = await deleteRows('users', { id: 1 });
+```
+
+### Migration from Raw SQL
+
+The project currently uses raw SQL queries. Here's how to migrate to Kysely:
+
+#### Before (Raw SQL)
+```javascript
+const { processDBRequest } = require('../../utils');
+
+const findUserById = async (id) => {
+  const query = `SELECT * FROM users WHERE id = $1`;
+  const { rows } = await processDBRequest({ query, queryParams: [id] });
+  return rows[0];
+};
+```
+
+#### After (Kysely)
+```javascript
+const { getDatabase } = require('../../db');
+
+const findUserById = async (id) => {
+  const db = getDatabase();
+  return await db
+    .selectFrom('users')
+    .selectAll()
+    .where('id', '=', id)
+    .executeTakeFirst();
+};
+```
+
+### Database Configuration
+
+The Kysely configuration is in `kysely.config.js`:
+
+```javascript
+module.exports = defineConfig({
+  dialect: 'postgres',
+  connectionString: process.env.DATABASE_URL,
+  out: 'src/types/database.ts',
+  camelCase: true,
+});
+```
+
+### Project Structure
+
+```
+backend/src/
+├── db/
+│   ├── database.js          # Kysely instance creation
+│   ├── query-builder.js     # Query utility functions
+│   └── index.js             # Module exports
+├── types/
+│   └── database.ts          # Auto-generated schema types
+└── ...
+```
 
 ---
 

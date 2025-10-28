@@ -4,12 +4,26 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run src/modules/students/students.integration.test.ts",
+    "test:integration:watch": "vitest src/modules/students/students.integration.test.ts",
+    "test:all": "npm run test:run && npm run test:integration",
+    "db:generate": "kysely-codegen --out-file src/types/database.ts",
+    "db:generate:watch": "kysely-codegen --out-file src/types/database.ts --watch",
+    "clean": "rm -rf dist",
+    "clean:js": "find src -name '*.js' -type f ! -path '*/node_modules/*' -delete",
+    "clean:all": "npm run clean && npm run clean:js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^24.9.1",
     "argon2": "^0.40.3",
     "axios": "^1.4.0",
     "cookie-parser": "^1.4.6",
@@ -17,12 +31,29 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
+    "go-go-try": "^6.2.0",
+    "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.12.0",
+    "kysely": "^0.28.8",
+    "pg": "^8.16.3",
     "request": "^2.88.2",
     "resend": "^4.0.0",
     "sqlite3": "^5.1.7",
     "uuid": "^10.0.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.15.6",
+    "@types/uuid": "^10.0.0",
+    "@vitest/ui": "^4.0.4",
+    "happy-dom": "^20.0.8",
+    "kysely-codegen": "^0.19.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.4"
   }
 }
